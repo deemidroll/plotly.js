@@ -78,6 +78,7 @@ function plotOne(gd, cd, element, transitionOpts) {
     var hasTransition = helpers.hasTransition(transitionOpts);
 
     // stash of 'previous' position data used by tweening functions
+    var prevEntry = null;
     var prevLookup = {};
     var prevLookdown = {};
     var getPrev = function(pt, upDown) {
@@ -359,35 +360,81 @@ function plotOne(gd, cd, element, transitionOpts) {
         return parentPrev || {};
     };
 
+    var findClosestEdge = function(pt, refRect, size) {
+        var e = trace.tiling.pad;
+        var isLeftOfRect = function(x) { return x - e <= refRect.x0; };
+        var isRightOfRect = function(x) { return x + e >= refRect.x1; };
+        var isBottomOfRect = function(y) { return y - e <= refRect.y0; };
+        var isTopOfRect = function(y) { return y + e >= refRect.y1; };
+
+        return {
+            x0: isLeftOfRect(pt.x0 - e) ? 0 : isRightOfRect(pt.x0 - e) ? size[0] : pt.x0,
+            x1: isLeftOfRect(pt.x1 + e) ? 0 : isRightOfRect(pt.x1 + e) ? size[0] : pt.x1,
+            y0: isBottomOfRect(pt.y0 - e) ? 0 : isTopOfRect(pt.y0 - e) ? size[1] : pt.y0,
+            y1: isBottomOfRect(pt.y1 + e) ? 0 : isTopOfRect(pt.y1 + e) ? size[1] : pt.y1
+        };
+    };
+
     var makeExitSliceInterpolator = function(pt, upDown, refRect, size) {
         var prev = getPrev(pt, upDown);
+        var entryPrev = getPrev(entry, upDown);
+        var next;
 
-        return d3.interpolate(prev, getOrigin(pt, upDown, refRect, size));
+        if(entryPrev) {
+            // 'entryPrev' is here has the previous coordinates of the entry
+            // node, which corresponds to the last "clicked" node when zooming in
+            next = findClosestEdge(pt, entryPrev, size);
+        } else {
+            // TODO
+            // this happens when maxdepth is set, when leaves must
+            // be removed and the entry is new (i.e. does not have a 'prev' object)
+            next = {x0: 0, x1: 0, y0: 0, y1: 0};
+        }
+
+        return d3.interpolate(prev, next);
     };
 
     var makeUpdateSliceInterpolator = function(pt, upDown, refRect, size) {
         var prev0 = getPrev(pt, upDown);
-        var prev = {};
-        var origin = getOrigin(pt, upDown, refRect, size);
+        var prev;
+        var next = {x0: pt.x0, x1: pt.x1, y0: pt.y0, y1: pt.y1};
 
-        Lib.extendFlat(prev, origin);
+        console.log('interpolator for', helpers.getPtId(pt))
 
         if(prev0) {
             // if pt already on graph, this is easy
             prev = prev0;
+            console.log('-')
         } else {
             // for new pts:
-            if(pt.parent) {
-                Lib.extendFlat(prev, interpFromParent(pt, upDown));
+            if(prevEntry) {
+                // if trace was visible before
+                if(pt.parent) {
+                    // TODO find and stash result once pre trace
+                    var nextOfPrevEntry = helpers.findChildPt(hierarchy, helpers.getPtId(prevEntry));
+
+                    if(nextOfPrevEntry) {
+                        console.log('0', prevEntry, nextOfPrevEntry)
+                        prev = findClosestEdge(pt, nextOfPrevEntry, size);
+                    } else {
+                        console.log('1')
+                        // TODO
+                    }
+                } else {
+                    console.log('2', helpers.getPtId(pt))
+                    // TODO
+                    prev = {x0: 0, x1: 0, y0: 0, y1: 0}
+                }
+            } else {
+                console.log('3')
+                // TODO
             }
+
+            console.log(prev, '--->', next)
+            console.log('')
         }
 
-        return d3.interpolate(prev, {
-            x0: pt.x0,
-            x1: pt.x1,
-            y0: pt.y0,
-            y1: pt.y1
-        });
+        return d3.interpolate(prev, next);
     };
 
     var makeUpdateTextInterpolator = function(pt, upDown, refRect, size) {
@@ -494,6 +541,10 @@ function plotOne(gd, cd, element, transitionOpts) {
                 y1: pt.y1,
                 transform: pt.transform
             };
+
+            if(!prevEntry && helpers.isEntry(pt)) {
+                prevEntry = pt;
+            }
         });
     }
 
