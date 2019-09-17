@@ -296,6 +296,8 @@ function plotOne(gd, cd, element, transitionOpts) {
             // - if 'below' where the root-node used to be: shrink it radially inward
             // - otherwise, collapse it clockwise or counterclockwise which ever is shortest to theta=0
             next = pt.rpx1 < entryPrev.rpx1 ? {rpx0: 0, rpx1: 0} : {x0: a, x1: a};
+
+            console.log('exit', pt.rpx1 < entryPrev.rpx1)
         } else {
             // this happens when maxdepth is set, when leaves must
             // be removed and the rootPt is new (i.e. does not have a 'prev' object)
@@ -319,6 +321,8 @@ function plotOne(gd, cd, element, transitionOpts) {
                 rpx0: rMax, rpx1: rMax,
                 x0: interp(ci / n), x1: interp((ci + 1) / n)
             };
+
+            console.log('exit maxdepth case')
         }
 
         return d3.interpolate(prev, next);
@@ -332,6 +336,7 @@ function plotOne(gd, cd, element, transitionOpts) {
         if(prev0) {
             // if pt already on graph, this is easy
             prev = prev0;
+            console.log('update!')
         } else {
             // for new pts:
             if(prevEntry) {
@@ -343,20 +348,28 @@ function plotOne(gd, cd, element, transitionOpts) {
                         // its final angle
                         var a = pt.x1 > nextX1ofPrevEntry ? 2 * Math.PI : 0;
                         prev = {x0: a, x1: a};
+
+                        console.log('new branch', pt.x1 > nextX1ofPrevEntry)
                     } else {
                         // if new leaf (when maxdepth is set),
                         // grow it radially and angularly from
                         // its parent node
                         prev = {rpx0: rMax, rpx1: rMax};
                         Lib.extendFlat(prev, interpX0X1FromParent(pt));
+
+                        console.log('new leaf')
                     }
                 } else {
                     // if new root-node, grow it radially
                     prev = {rpx0: 0, rpx1: 0};
+
+                    console.log('new root-node')
                 }
             } else {
                 // start sector of new traces from theta=0
                 prev = {x0: 0, x1: 0};
+
+                console.log('new trace')
             }
         }
 
