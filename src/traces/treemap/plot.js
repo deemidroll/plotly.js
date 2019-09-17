@@ -81,6 +81,7 @@ function plotOne(gd, cd, element, transitionOpts) {
     var prevEntry = null;
     var prevLookup = {};
     var prevLookdown = {};
+    var nextOfPrevEntry = null;
     var getPrev = function(pt, upDown) {
         return upDown ?
             prevLookup[helpers.getPtId(pt)] :
@@ -410,9 +411,6 @@ function plotOne(gd, cd, element, transitionOpts) {
             if(prevEntry) {
                 // if trace was visible before
                 if(pt.parent) {
-                    // TODO find and stash result once pre trace
-                    var nextOfPrevEntry = helpers.findChildPt(hierarchy, helpers.getPtId(prevEntry));
-
                     if(nextOfPrevEntry) {
                         console.log('0', prevEntry, nextOfPrevEntry)
                         prev = findClosestEdge(pt, nextOfPrevEntry, size);
@@ -548,7 +546,7 @@ function plotOne(gd, cd, element, transitionOpts) {
         });
     }
 
-    drawDescendants(gd, cd, entry, selDescendants, {
+    nextOfPrevEntry = drawDescendants(gd, cd, entry, selDescendants, {
         width: vpw,
         height: vph,
 
@@ -558,6 +556,7 @@ function plotOne(gd, cd, element, transitionOpts) {
         pathSlice: pathDescendant,
         toMoveInsideSlice: toMoveInsideSlice,
 
+        prevEntry: prevEntry,
         makeUpdateSliceInterpolator: makeUpdateSliceInterpolator,
         makeUpdateTextInterpolator: makeUpdateTextInterpolator,
 

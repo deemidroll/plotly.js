@@ -34,6 +34,7 @@ module.exports = function drawDescendants(gd, cd, entry, slices, opts) {
     var handleSlicesExit = opts.handleSlicesExit;
     var makeUpdateSliceInterpolator = opts.makeUpdateSliceInterpolator;
     var makeUpdateTextInterpolator = opts.makeUpdateTextInterpolator;
+    var prevEntry = opts.prevEntry;
     var refRect = {};
 
     var fullLayout = gd._fullLayout;
@@ -80,6 +81,22 @@ module.exports = function drawDescendants(gd, cd, entry, slices, opts) {
     handleSlicesExit(slices, upDown, refRect, [width, height], pathSlice);
 
     slices.order();
+
+    // next coords of previous entry
+    var nextOfPrevEntry = null;
+    if(hasTransition && prevEntry) {
+        var prevEntryId = helpers.getPtId(prevEntry);
+        slices.each(function(pt) {
+            if(nextOfPrevEntry === null && (helpers.getPtId(pt) === prevEntryId)) {
+                nextOfPrevEntry = {
+                    x0: pt.x0,
+                    x1: pt.x1,
+                    y0: pt.y0,
+                    y1: pt.y1
+                };
+            }
+        });
+    }
 
     var updateSlices = slices;
     if(hasTransition) {
@@ -177,4 +194,6 @@ module.exports = function drawDescendants(gd, cd, entry, slices, opts) {
             sliceText.attr('transform', strTransform(pt));
         }
     });
+
+    return nextOfPrevEntry;
 };
