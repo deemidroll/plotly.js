@@ -421,7 +421,7 @@ function plotOne(gd, cd, element, transitionOpts) {
                 } else {
                     console.log('2', helpers.getPtId(pt))
                     // TODO
-                    prev = {x0: 0, x1: 0, y0: 0, y1: 0}
+                    prev = pt;
                 }
             } else {
                 console.log('3')
